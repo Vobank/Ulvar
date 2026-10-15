@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ульвар</title>
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+
+<!-- Окно: перетаскивание + кнопки -->
+<div id="dragstrip" class="pywebview-drag-region"></div>
+<div id="wc">
+  <button class="wbtn" onclick="win('minimize')" title="Свернуть">—</button>
+  <button class="wbtn" id="maxBtn" onclick="win('toggle_max')" title="Развернуть / в окно">▢</button>
+  <button class="wbtn close" onclick="win('close')" title="Закрыть">✕</button>
+</div>
+<!-- ручки изменения размера окна -->
+<div class="rz r-r"></div><div class="rz r-b"></div><div class="rz r-br"></div>
+
+<!-- Блокировка -->
+<div id="lock">
+  <div class="mark">
+    <svg width="34" height="34" viewBox="0 0 24 24" stroke="#d97757" stroke-width="2.3" stroke-linecap="round">
+      <line x1="13.5" y1="12" x2="21" y2="12"/><line x1="13.06" y1="13.06" x2="18.36" y2="18.36"/>
+      <line x1="12" y1="13.5" x2="12" y2="21"/><line x1="10.94" y1="13.06" x2="5.64" y2="18.36"/>
+      <line x1="10.5" y1="12" x2="3" y2="12"/><line x1="10.94" y1="10.94" x2="5.64" y2="5.64"/>
+      <line x1="12" y1="10.5" x2="12" y2="3"/><line x1="13.06" y1="10.94" x2="18.36" y2="5.64"/>
+    </svg>
+  </div>
+  <div class="logo" data-i18n="brand">Ульвар</div>
+  <div class="sub" data-i18n="enter_pin">Введи ПИН</div>
+  <div class="dots"><div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div></div>
+  <div id="lockerr"></div>
+  <div class="pad">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="x">⌫</button><button data-k="0">0</button><button data-k="c">C</button>
+  </div>
+</div>
+
+<!-- Приложение -->
+<div id="app">
+  <aside class="side">
+    <div class="head pywebview-drag-region"><span class="brand" data-i18n="brand">Ульвар</span></div>
+    <div class="pad14">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input id="search" placeholder="Поиск по диалогам" data-i18n-ph="search_ph">
+      </div>
+    </div>
+    <div class="nav">
+      <div class="item active" id="navNew"><span class="ic">＋</span> <span data-i18n="new_chat">Новый диалог</span></div>
+      <div class="item" id="navProjects"><span class="ic">🗂</span> <span data-i18n="projects">Проекты</span></div>
+      <div class="item" id="navSettings"><span class="ic">⚙</span> <span data-i18n="settings">Настройки</span></div>
+    </div>
+    <div id="projBanner" class="projbanner" style="display:none">
+      <span class="pbname"></span>
+      <span class="pbact">
+        <button id="pbEdit" title="Инструкции проекта">✎</button>
+        <button id="pbExit" title="Выйти из проекта">✕</button>
+      </span>
+    </div>
+    <div class="seclabel" data-i18n="earlier">Ранее</div>
+    <div class="convs" id="convs"></div>
+  </aside>
+
+  <main class="main">
+    <div class="scroll" id="scroll">
+      <div id="hero">
+        <div class="greet">
+          <span id="greetText">Привет, Вова</span>
+        </div>
+        <div class="heroslot" id="heroslot"></div>
+      </div>
+      <div class="msgs" id="msgs" style="display:none"></div>
+    </div>
+    <div class="dock" id="dock" style="display:none"><div class="wrap" id="dockwrap"></div></div>
+  </main>
+</div>
+
+<!-- Композер (перемещается между центром и низом) -->
+<div id="composer">
+  <div class="cbox">
+    <div class="atts" id="pend"></div>
+    <textarea id="input" rows="1" placeholder="Чем помочь сегодня?" data-i18n-ph="composer_ph"></textarea>
+    <div class="crow">
+      <button class="plus" id="attachBtn" title="Прикрепить файл или картинку">＋</button>
+      <div id="sendArea"><button class="send" id="send">➤</button></div>
+    </div>
+  </div>
+  <input type="file" id="fileInput" multiple style="display:none"
+    accept="image/*,.txt,.md,.py,.js,.ts,.json,.csv,.log,.html,.css,.xml,.yaml,.yml,.ini,.c,.cpp,.java,.go,.rs,.sh,.bat,.sql">
+</div>
+
+<!-- Меню «+» -->
+<div id="plusMenu" class="menu hidden">
+  <div class="mi" id="miAttach"><span data-i18n="mi_attach">📎 Прикрепить файлы или фото</span> <span class="kbd">Ctrl+U</span></div>
+  <div class="mi" id="miSkills"><span data-i18n="mi_skills">🧩 Навыки</span> <span class="kbd" id="skCount">307</span> ▸</div>
+  <div class="mi" id="miAgent"><span data-i18n="mi_agent">🛠 Режим агента</span> <span class="kbd" id="agentState">выкл</span></div>
+  <div class="mi" id="miWeb"><span data-i18n="mi_web">🔎 Поиск в интернете</span></div>
+</div>
+
+<!-- Панель навыков -->
+<div class="overlay" id="skillsOverlay">
+  <div class="modal" style="width:560px;max-height:80vh;display:flex;flex-direction:column">
+    <h3><span data-i18n="skills_title">Навыки Ульвара</span> <span id="skTotal" style="color:var(--mut);font-weight:400"></span></h3>
+    <input type="text" id="skSearch" placeholder="Поиск навыка…" data-i18n-ph="skills_search_ph" style="margin:6px 0 10px">
+    <div id="skList" style="overflow:auto;flex:1"></div>
+    <div class="mrow"><button class="btn g" onclick="closeSkills()" data-i18n="close">Закрыть</button></div>
+  </div>
+</div>
+
+<!-- Проекты: список -->
+<div class="overlay" id="projOverlay">
+  <div class="modal" style="width:640px;max-height:84vh;display:flex;flex-direction:column">
+    <div class="sethead">
+      <h3 data-i18n="projects">Проекты</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn" id="projNewBtn" data-i18n="project_new">＋ Новый проект</button>
+        <button class="xbtn" onclick="closeProjects()" title="Закрыть">✕</button>
+      </div>
+    </div>
+    <div id="projList" class="projgrid" style="overflow:auto;margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- Проект: создание/редактирование -->
+<div class="overlay" id="projFormOverlay">
+  <div class="modal" style="width:540px">
+    <h3 id="projFormTitle" data-i18n="project_create">Новый проект</h3>
+    <label data-i18n="project_name">Название</label>
+    <input type="text" id="projName" placeholder="Мой проект">
+    <label data-i18n="project_instr">Инструкции — контекст для всех чатов проекта</label>
+    <textarea id="projInstr" placeholder="Напр.: помогай мне с игрой Eclipse RP, учитывай законы…"></textarea>
+    <div class="mrow">
+      <button class="btn g" onclick="closeProjForm()" data-i18n="cancel">Отмена</button>
+      <button class="btn" id="projSaveBtn" data-i18n="save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Настройки -->
+<div class="overlay" id="setOverlay">
+  <div class="modal setmodal" style="max-height:88vh;overflow:auto">
+    <div class="sethead">
+      <h3 data-i18n="settings">Настройки</h3>
+      <button class="xbtn" onclick="closeSettings()" title="Закрыть">✕</button>
+    </div>
+    <div id="setStatus" class="statusbox">проверка…</div>
+
+    <div class="setgroup" data-i18n="g_look">Вид</div>
+    <div class="setrow">
+      <div class="setlab"><div class="t" data-i18n="theme">Тема</div></div>
+      <div class="seg ctrl" id="segTheme">
+        <button data-v="system" data-i18n="theme_sys">Система</button>
+        <button data-v="light" data-i18n="theme_light">Светлая</button>
+        <button data-v="dark" data-i18n="theme_dark">Тёмная</button>
+      </div>
+    </div>
+    <div class="setrow">
+      <div class="setlab"><div class="t" data-i18n="language">Язык</div></div>
+      <div class="seg ctrl" id="segLang">
+        <button data-v="ru">Русский</button>
+        <button data-v="en">English</button>
+      </div>
+    </div>
+    <div class="setrow">
+      <div class="setlab"><div class="t" data-i18n="reply_match">Отвечать на языке сообщения</div>
+        <div class="s" data-i18n="reply_match_s">Иначе — всегда на языке интерфейса.</div></div>
+      <label class="sw"><input type="checkbox" id="setReplyMatch"><span class="tr"></span></label>
+    </div>
+
+    <div class="setgroup" data-i18n="g_engine">Движок</div>
+    <div class="setrow">
+      <div class="setlab"><div class="t" data-i18n="engine">Где работает модель</div>
+        <div class="s" data-i18n="engine_s">Локально — через Ollama. По API — облако (для слабых ПК).</div></div>
+      <div class="seg ctrl" id="segEngine">
+        <button data-v="local" data-i18n="engine_local">Локально</button>
+        <button data-v="api" data-i18n="engine_api">По API</button>
+      </div>
+    </div>
+    <div class="apibox" id="apiBox">
+      <div class="setrow col"><div class="setlab"><div class="t" data-i18n="api_base">Адрес API</div></div>
+        <input type="text" id="setApiBase" class="ctrl" placeholder="https://openrouter.ai/api/v1"></div>
+      <div class="setrow col"><div class="setlab"><div class="t" data-i18n="api_key">Ключ API</div></div>
+        <input type="password" id="setApiKey" class="ctrl" placeholder="sk-…"></div>
+      <div class="setrow col"><div class="setlab"><div class="t" data-i18n="api_model">Модель в облаке</div></div>
+        <input type="text" id="setApiModel" class="ctrl" placeholder="meta-llama/llama-3.1-8b-instruct"></div>
+    </div>
+
+    <div class="setgroup" data-i18n="g_model">Модель</div>
+    <div class="setrow"><div class="setlab"><div class="t" data-i18n="model_main">Основная модель</div></div>
+      <select id="setModel" class="ctrl"></select></div>
+    <div class="setrow"><div class="setlab"><div class="t" data-i18n="model_vision">Для картинок (зрение)</div></div>
+      <select id="setVision" class="ctrl"></select></div>
+    <div class="setrow"><div class="setlab"><div class="t" data-i18n="auto_model">Авто-выбор модели</div>
+      <div class="s" data-i18n="auto_model_s">Простое — быстрой, сложное — умной.</div></div>
+      <label class="sw"><input type="checkbox" id="setAuto"><span class="tr"></span></label></div>
+    <div class="setrow col"><div class="setlab"><div class="t"><span data-i18n="temp">Креативность</span>: <span id="tempVal">0.7</span></div></div>
+      <input type="range" id="setTemp" class="ctrl" min="0" max="1" step="0.05" value="0.7"></div>
+
+    <div class="setgroup" data-i18n="g_agent">Агент</div>
+    <div class="setrow"><div class="setlab"><div class="t" data-i18n="danger">Опасные действия без подтверждения</div>
+      <div class="s" data-i18n="danger_s">Удаление, выключение и т.п.</div></div>
+      <label class="sw"><input type="checkbox" id="setDanger"><span class="tr"></span></label></div>
+
+    <div class="setgroup" data-i18n="g_search">Поиск</div>
+    <div class="setrow col"><div class="setlab"><div class="t" data-i18n="tavily">Ключ Tavily</div>
+      <div class="s" data-i18n="tavily_s">Поиск сразу по многим сайтам. Бесплатно на tavily.com.</div></div>
+      <input type="password" id="setTavily" class="ctrl" placeholder="tvly-…"></div>
+
+    <div class="setgroup" data-i18n="g_personal">Личное</div>
+    <div class="setrow"><div class="setlab"><div class="t" data-i18n="your_name">Как к тебе обращаться</div></div>
+      <input type="text" id="setName" class="ctrl" placeholder="Вова"></div>
+    <div class="setrow col"><div class="setlab"><div class="t" data-i18n="persona">Характер Ульвара</div>
+      <div class="s" data-i18n="persona_s">Пусто = стандартный.</div></div>
+      <textarea id="setPersona" class="ctrl" placeholder="Опиши, каким должен быть Ульвар…"></textarea></div>
+
+    <div class="setgroup" data-i18n="g_data">Данные</div>
+    <div class="setrow col">
+      <button class="btn g" style="width:100%" onclick="exportDialog()" data-i18n="export">⬇ Выгрузить текущий диалог в файл</button>
+      <button class="btn r" style="width:100%" onclick="clearAllDialogs()" data-i18n="clear_all">🗑 Очистить все диалоги</button>
+    </div>
+
+    <div class="mrow">
+      <button class="btn g" onclick="closeSettings()" data-i18n="cancel">Отмена</button>
+      <button class="btn" onclick="saveSettings()" data-i18n="save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Подтверждение удаления -->
+<div class="overlay" id="delOverlay">
+  <div class="modal">
+    <h3 data-i18n="del_title">Удалить диалог?</h3>
+    <p class="m" id="delName" data-i18n="del_text">Это действие нельзя отменить.</p>
+    <div class="mrow">
+      <button class="btn g" onclick="closeDel()" data-i18n="cancel">Отмена</button>
+      <button class="btn r" id="delConfirm" data-i18n="delete">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<script src="/ui/app.js"></script>
+</body>
+</html>

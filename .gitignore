@@ -1,0 +1,41 @@
+# Окружение и кэши
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Личные данные пользователя (НЕ публиковать)
+data/
+seed_memory.py
+
+# Большие/экспериментальные части
+engine/
+models/
+bin/
+
+# Логи и временные/тестовые файлы
+*.log
+models_download_*log.txt
+ЖУРНАЛ_СБОРКИ.txt
+_*.txt
+_*.json
+_*.xlsx
+document.docx
+emb_cache.json
+
+# Тестовые/служебные скрипты
+test_*.py
+bench*.py
+diag_tools.py
+download_*.py
+fix_name.py
+*.ps1
+!install.ps1
+
+# Прочее
+*.pdf
+*.pptx
+*.docx
+*.xlsx
+.DS_Store
+Thumbs.db
